@@ -3,6 +3,24 @@
 Pomodoro-esque CLI in Rust to be used in TMUX
 
 ## Setup
+
+* Rust
+```
+cargo build --release
+cargo install --force
+```
+
 ## Start
+```
+rpomo --start
+```
+
 ## Stop
+```
+rpomo --stop
+```
+
 ## Status
+```
+rpomo --status
+```
