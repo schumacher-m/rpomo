@@ -1,5 +1,4 @@
 use serde_json::{Error};
-use chrono::Duration;
 use chrono::prelude::*;
 use std::fs::File;
 use std::io::prelude::*;
@@ -156,6 +155,7 @@ impl Pomodoro {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use chrono::Duration;
 
     #[test]
     fn it_returns_on_exceeding_work_time() {
