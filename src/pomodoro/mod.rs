@@ -112,7 +112,7 @@ impl Pomodoro {
             let derp = Local::now().signed_duration_since(utc);
             let minutes = derp.num_minutes();
             let seconds = derp.num_seconds();
-            format!("Break: {:02}:{:02}", minutes, seconds-(minutes*60))
+            format!("Break (#{}): {:02}:{:02}", self.break_count, minutes, seconds-(minutes*60))
         } else {
             "???".to_owned()
         }
@@ -225,10 +225,14 @@ mod tests {
         assert_eq!(p.status(), "Working: 00:00");
 
         p.start_break();
-        assert_eq!(p.status(), "Break: 00:00");
+        assert_eq!(p.status(), "Break (#1): 00:00");
 
         p.start_work();
         assert_eq!(p.status(), "Working: 00:00");
+
+        p.start_break();
+        assert_eq!(p.status(), "Break (#2): 00:00");
+
     }
 
     // fn it_returns_on_exceeding_long_break_time() {
