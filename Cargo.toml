@@ -1,6 +1,6 @@
 [package]
 name = "rpomo"
-version = "0.1.0"
+version = "1.0.1"
 authors = ["Michael Schumacher <schumacher.m@me.com>"]
 
 [dependencies]
@@ -11,5 +11,5 @@ serde_derive = "1.0.27"
 chrono = "0.4.0"
 
 [profile.release]
-codegen-units = 32
+lto = true
 debug = false
