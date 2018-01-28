@@ -5,32 +5,18 @@ extern crate serde_json;
 extern crate serde_derive;
 extern crate chrono;
 
+
+
+pub mod pomodoro;
+
 use clap::{Arg, App};
-use serde_json::{Error};
-use chrono::prelude::*;
-use std::fs::File;
-use std::io::prelude::*;
-use std::env;
+// use serde_json::{Error};
+// use chrono::prelude::*;
+// use std::fs::File;
+// use std::io::prelude::*;
+// use std::env;
 
-static CONFIG_FILENAME : &'static str = ".rpomo.json";
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Pomodoro{
-    start_date_time: String
-}
-
-pub fn read_pomodoro() -> Result<Pomodoro, Error> {
-    let mut s = String::new();
-    File::open(format!("{}/{}", env::home_dir().unwrap().display(), CONFIG_FILENAME)).unwrap().read_to_string(&mut s).unwrap();
-    let p: Pomodoro = serde_json::from_str(&s).unwrap();
-    Ok(p)
-}
-
-pub fn write_pomodoro(p: &Pomodoro) -> Result<(), std::io::Error> {
-    let data = serde_json::to_value(p).unwrap().to_string();
-    let mut f = File::create(format!("{}/{}", env::home_dir().unwrap().display(), CONFIG_FILENAME)).expect("Unable to create file");
-    f.write_all(data.as_bytes())
-}
+// static CONFIG_FILENAME : &'static str = ".rpomo.json";
 
 fn main() {
     let matches = App::new("rpomo")
@@ -56,23 +42,34 @@ fn main() {
         .get_matches();
 
     if matches.is_present("start") {
-        let utc: DateTime<Local> = Local::now();
-        let p = Pomodoro {
-            start_date_time: utc.to_rfc3339()
-        };
-        let _ = write_pomodoro(&p);
+        let mut p = pomodoro::Pomodoro::new();
+        p.start_work();
+        let _ = p.write_to_file();
     }
 
     if matches.is_present("status") {
-        let mut p = read_pomodoro().unwrap();
-        let utc = DateTime::parse_from_rfc3339(&p.start_date_time).unwrap();
-        let derp = Local::now().signed_duration_since(utc);
-        let minutes = derp.num_minutes();
-        let seconds = derp.num_seconds();
-        println!("{:02}:{:02}", minutes, seconds-(minutes*60));
+        match pomodoro::Pomodoro::init_from_file() {
+            Result::Ok(mut p) => {
+                if p.is_exceeding_work_timer() && p.is_working() {
+                    p.start_break();
+                } else if p.is_exceeding_break_timer() && p.is_on_break() {
+                    p.start_work();
+                } else {
+                    println!("{}", p.status());
+                }
+                p.write_to_file();
+            },
+            Result::Err(err) => println!("{:?}", err)
+        }
     }
 
     if matches.is_present("stop") {
-        println!("{}", "Stop");
+        match pomodoro::Pomodoro::init_from_file() {
+            Result::Ok(mut p) => {
+                p.stop();
+                let _ = p.write_to_file();
+            },
+            Result::Err(err) => println!("{:?}", err)
+        }
     }
 }
