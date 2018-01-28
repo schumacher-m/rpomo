@@ -16,10 +16,11 @@ const LONG_BREAK_COUNT: u8 = 4;
 pub struct Pomodoro{
     start_date_time: String,
     break_date_time: String,
+    work_count: u8,
     break_count: u8,
     working: bool,
     on_break: bool,
-    on_long_break: bool
+    on_long_break: bool,
 }
 
 impl Pomodoro {
@@ -27,6 +28,7 @@ impl Pomodoro {
         Pomodoro {
             start_date_time: "".to_owned(),
             break_date_time: "".to_owned(),
+            work_count: 0,
             break_count: 0,
             working: false,
             on_break: false,
@@ -93,6 +95,7 @@ impl Pomodoro {
         let utc: DateTime<Local> = Local::now();
         self.working = true;
         self.start_date_time = utc.to_rfc3339();
+        self.work_count = self.work_count + 1;
         self.on_break = false;
         self.on_long_break = false;
     }
@@ -101,6 +104,7 @@ impl Pomodoro {
         self.working = false;
         self.on_break = false;
         self.on_long_break = false;
+        self.work_count = 0;
         self.break_count = 0;
         self.start_date_time = "".to_owned();
         self.break_date_time = "".to_owned();
@@ -119,7 +123,7 @@ impl Pomodoro {
             },
             &Pomodoro { working: true, on_break: false, on_long_break: false, .. } => {
                 let (minutes, _) = Self::calculate_duration_difference(&self.start_date_time);
-                format!("Working: {:01}m/{:01}m", minutes, WORK_DURATION)
+                format!("Work (#{}): {:01}m/{:01}m", self.work_count, minutes, WORK_DURATION)
             },
             &Pomodoro { working: false, on_break: true, on_long_break: false, .. } => {
                 let (minutes, _) = Self::calculate_duration_difference(&self.break_date_time);
@@ -238,6 +242,7 @@ mod tests {
         assert_eq!(p.working, false);
         assert_eq!(p.on_break, false);
         assert_eq!(p.on_long_break, false);
+        assert_eq!(p.work_count, 0);
         assert_eq!(p.break_count, 0);
         assert!(p.start_date_time.is_empty());
         assert!(p.break_date_time.is_empty());
@@ -249,6 +254,7 @@ mod tests {
         p.start_work();
         assert_eq!(p.working, true);
         assert_eq!(p.on_break, false);
+        assert_eq!(p.work_count, 1);
         assert_eq!(p.on_long_break, false);
         assert!(!p.start_date_time.is_empty());
     }
@@ -271,6 +277,15 @@ mod tests {
     }
 
     #[test]
+    fn it_increases_work_count() {
+        let mut p = Pomodoro::new();
+        p.start_work();
+        assert_eq!(p.work_count, 1);
+        p.start_work();
+        assert_eq!(p.work_count, 2);
+    }
+
+    #[test]
     fn it_triggers_a_break() {
         let mut p = Pomodoro::new();
         p.start_work();
@@ -287,11 +302,11 @@ mod tests {
         let mut p = Pomodoro::new();
         assert_eq!(p.status(), "Idle");
         p.start_work();
-        assert_eq!(p.status(), "Working: 0m/25m");
+        assert_eq!(p.status(), "Work (#1): 0m/25m");
         p.start_break();
         assert_eq!(p.status(), "Break (#1): 0m/5m");
         p.start_work();
-        assert_eq!(p.status(), "Working: 0m/25m");
+        assert_eq!(p.status(), "Work (#2): 0m/25m");
         p.start_break();
         assert_eq!(p.status(), "Break (#2): 0m/5m");
         p.start_break();
