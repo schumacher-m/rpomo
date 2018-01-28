@@ -25,7 +25,6 @@ pub struct Pomodoro{
 
 impl Pomodoro {
     pub fn new() -> Pomodoro {
-        let utc: DateTime<Local> = Local::now();
         Pomodoro {
             start_date_time: "".to_owned(),
             break_date_time: "".to_owned(),
@@ -103,13 +102,6 @@ impl Pomodoro {
         self.start_date_time = "".to_owned();
         self.break_date_time = "".to_owned();
     }
-
-    // pub fn is_exceeding_long_break_timer(&mut self) -> bool {
-    //     let utc = DateTime::parse_from_rfc3339(&self.break_date_time).unwrap();
-    //     let duration_diff = Local::now().signed_duration_since(utc);
-    //     // TODO Check for break
-    //     duration_diff.num_minutes() >= LONG_BREAK_DURATION as i64
-    // }
 
     pub fn status(&mut self) -> String {
         if !self.working && !self.on_break && !self.on_long_break {
