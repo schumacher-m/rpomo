@@ -11,6 +11,7 @@ static CONFIG_FILENAME : &'static str = ".rpomo.json";
 const WORK_DURATION: u8 = 25;
 const BREAK_DURATION: u8 = 5;
 const LONG_BREAK_DURATION: u8 = 15;
+const LONG_BREAK_COUNT: u8 = 4;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Pomodoro{
@@ -39,8 +40,11 @@ impl Pomodoro {
         match DateTime::parse_from_rfc3339(&self.start_date_time) {
             Result::Ok(utc) => {
                 let duration_diff = Local::now().signed_duration_since(utc);
-                // TODO Check for running
-                duration_diff.num_minutes() >= WORK_DURATION as i64
+                if self.is_working() {
+                    duration_diff.num_minutes() >= WORK_DURATION as i64
+                } else {
+                    false
+                }
             }
             _ => false
         }
@@ -50,8 +54,11 @@ impl Pomodoro {
         match DateTime::parse_from_rfc3339(&self.break_date_time) {
             Result::Ok(utc) => {
                 let duration_diff = Local::now().signed_duration_since(utc);
-                // TODO Check for break
-                duration_diff.num_minutes() >= BREAK_DURATION as i64
+                if self.is_on_break() {
+                    duration_diff.num_minutes() >= BREAK_DURATION as i64
+                } else {
+                    false
+                }
             }
             _ => false
         }
@@ -69,9 +76,15 @@ impl Pomodoro {
         let utc: DateTime<Local> = Local::now();
         self.working = false;
         self.break_date_time = utc.to_rfc3339();
-        self.on_break = true;
         self.break_count = self.break_count + 1;
-        self.on_long_break = false;
+
+        if self.break_count == LONG_BREAK_COUNT {
+            self.on_long_break = true;
+            self.on_break = false;
+        } else {
+            self.on_break = true;
+            self.on_long_break = false;
+        }
     }
 
     pub fn start_work(&mut self) {
@@ -145,15 +158,45 @@ mod tests {
     fn it_returns_on_exceeding_work_time() {
         let mut p = Pomodoro::new();
         let utc: DateTime<Local> = Local::now();
+        p.working = true;
         p.start_date_time = (utc - Duration::minutes(WORK_DURATION as i64 + 1)).to_rfc3339();
         assert_eq!(p.is_exceeding_work_timer(), true);
+    }
+
+    #[test]
+    fn it_returns_false_if_not_working() {
+        let mut p = Pomodoro::new();
+        let utc: DateTime<Local> = Local::now();
+        p.working = false;
+        p.start_date_time = (utc - Duration::minutes(WORK_DURATION as i64 + 1)).to_rfc3339();
+        assert_eq!(p.is_exceeding_work_timer(), false);
     }
 
     #[test]
     fn it_returns_on_exceeding_break_time() {
         let mut p = Pomodoro::new();
         let utc: DateTime<Local> = Local::now();
+        p.on_break = true;
         p.break_date_time = (utc - Duration::minutes(BREAK_DURATION as i64 + 1)).to_rfc3339();
+        assert_eq!(p.is_exceeding_break_timer(), true);
+    }
+
+    #[test]
+    fn it_returns_false_if_not_break_is_active() {
+        let mut p = Pomodoro::new();
+        let utc: DateTime<Local> = Local::now();
+        p.on_break = false;
+        p.break_date_time = (utc - Duration::minutes(BREAK_DURATION as i64 + 1)).to_rfc3339();
+        assert_eq!(p.is_exceeding_break_timer(), false);
+    }
+
+    fn it_returns_on_exceeding_long_break_time() {
+        let mut p = Pomodoro::new();
+        let utc: DateTime<Local> = Local::now();
+        p.on_long_break = true;
+        p.break_date_time = (utc - Duration::minutes(BREAK_DURATION as i64 + 1)).to_rfc3339();
+        assert_eq!(p.is_exceeding_break_timer(), false);
+        p.break_date_time = (utc - Duration::minutes(LONG_BREAK_DURATION as i64 + 1)).to_rfc3339();
         assert_eq!(p.is_exceeding_break_timer(), true);
     }
 
@@ -205,6 +248,19 @@ mod tests {
     }
 
     #[test]
+    fn it_triggers_a_long_break() {
+        let mut p = Pomodoro::new();
+        p.start_work();
+        p.start_break();
+        p.start_break();
+        p.start_break();
+        p.start_break();
+        assert_eq!(p.break_count, 4);
+        assert_eq!(p.on_long_break, true);
+        assert_eq!(p.on_break, false);
+    }
+
+    #[test]
     fn it_triggers_a_break() {
         let mut p = Pomodoro::new();
         p.start_work();
@@ -234,13 +290,6 @@ mod tests {
         assert_eq!(p.status(), "Break (#2): 00:00");
 
     }
-
-    // fn it_returns_on_exceeding_long_break_time() {
-    //     let mut p = Pomodoro::new();
-    //     let utc: DateTime<Local> = Local::now();
-    //     p.break_date_time = (utc - Duration::minutes(LONG_BREAK_DURATION as i64 + 1)).to_rfc3339();
-    //     assert_eq!(p.is_exceeding_long_break_timer(), true);
-    // }
 
     #[test]
     fn it_returns_the_default_file_path() {
