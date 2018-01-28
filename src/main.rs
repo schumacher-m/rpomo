@@ -5,8 +5,6 @@ extern crate serde_json;
 extern crate serde_derive;
 extern crate chrono;
 
-
-
 pub mod pomodoro;
 
 use clap::{Arg, App};

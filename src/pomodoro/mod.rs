@@ -8,7 +8,7 @@ use std;
 use serde_json;
 
 static CONFIG_FILENAME : &'static str = ".rpomo.json";
-const WORK_DURATION: u8 = 1;
+const WORK_DURATION: u8 = 25;
 const BREAK_DURATION: u8 = 5;
 const LONG_BREAK_DURATION: u8 = 15;
 
