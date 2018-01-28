@@ -54,7 +54,11 @@ impl Pomodoro {
             Result::Ok(utc) => {
                 let duration_diff = Local::now().signed_duration_since(utc);
                 if self.is_on_break() {
-                    duration_diff.num_minutes() >= BREAK_DURATION as i64
+                    if self.break_count >= LONG_BREAK_COUNT {
+                        duration_diff.num_minutes() >= LONG_BREAK_DURATION as i64
+                    } else {
+                        duration_diff.num_minutes() >= BREAK_DURATION as i64
+                    }
                 } else {
                     false
                 }
@@ -182,10 +186,13 @@ mod tests {
         assert_eq!(p.is_exceeding_break_timer(), false);
     }
 
+    #[test]
     fn it_returns_on_exceeding_long_break_time() {
         let mut p = Pomodoro::new();
         let utc: DateTime<Local> = Local::now();
+        p.on_break = false;
         p.on_long_break = true;
+        p.break_count = LONG_BREAK_COUNT;
         p.break_date_time = (utc - Duration::minutes(BREAK_DURATION as i64 + 1)).to_rfc3339();
         assert_eq!(p.is_exceeding_break_timer(), false);
         p.break_date_time = (utc - Duration::minutes(LONG_BREAK_DURATION as i64 + 1)).to_rfc3339();
