@@ -118,16 +118,16 @@ impl Pomodoro {
                 "Idle".to_owned()
             },
             &Pomodoro { working: true, on_break: false, on_long_break: false, .. } => {
-                let (minutes, seconds) = Self::calculate_duration_difference(&self.start_date_time);
-                format!("Working: {:02}:{:02}", minutes, seconds-(minutes*60))
+                let (minutes, _) = Self::calculate_duration_difference(&self.start_date_time);
+                format!("Working: {:01}m/{:01}m", minutes, WORK_DURATION)
             },
             &Pomodoro { working: false, on_break: true, on_long_break: false, .. } => {
-                let (minutes, seconds) = Self::calculate_duration_difference(&self.break_date_time);
-                format!("Break (#{}): {:02}:{:02}", self.break_count, minutes, seconds-(minutes*60))
+                let (minutes, _) = Self::calculate_duration_difference(&self.break_date_time);
+                format!("Break (#{}): {:01}m/{:01}m", self.break_count, minutes, BREAK_DURATION)
             },
             &Pomodoro { working: false, on_break: false, on_long_break: true, .. } => {
-                let (minutes, seconds) = Self::calculate_duration_difference(&self.break_date_time);
-                format!("Long Break (#{}): {:02}:{:02}", self.break_count, minutes, seconds-(minutes*60))
+                let (minutes, _) = Self::calculate_duration_difference(&self.break_date_time);
+                format!("Long Break (#{}): {:01}m/{:01}m", self.break_count, minutes, LONG_BREAK_DURATION)
             },
             _ => "???".to_owned()
         }
@@ -287,19 +287,19 @@ mod tests {
         let mut p = Pomodoro::new();
         assert_eq!(p.status(), "Idle");
         p.start_work();
-        assert_eq!(p.status(), "Working: 00:00");
+        assert_eq!(p.status(), "Working: 0m/25m");
         p.start_break();
-        assert_eq!(p.status(), "Break (#1): 00:00");
+        assert_eq!(p.status(), "Break (#1): 0m/5m");
         p.start_work();
-        assert_eq!(p.status(), "Working: 00:00");
+        assert_eq!(p.status(), "Working: 0m/25m");
         p.start_break();
-        assert_eq!(p.status(), "Break (#2): 00:00");
+        assert_eq!(p.status(), "Break (#2): 0m/5m");
         p.start_break();
-        assert_eq!(p.status(), "Break (#3): 00:00");
+        assert_eq!(p.status(), "Break (#3): 0m/5m");
         p.start_break();
-        assert_eq!(p.status(), "Long Break (#4): 00:00");
+        assert_eq!(p.status(), "Long Break (#4): 0m/15m");
         p.start_break();
-        assert_eq!(p.status(), "Break (#5): 00:00");
+        assert_eq!(p.status(), "Break (#5): 0m/5m");
     }
 
     #[test]
