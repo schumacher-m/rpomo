@@ -8,13 +8,6 @@ extern crate chrono;
 pub mod pomodoro;
 
 use clap::{Arg, App};
-// use serde_json::{Error};
-// use chrono::prelude::*;
-// use std::fs::File;
-// use std::io::prelude::*;
-// use std::env;
-
-// static CONFIG_FILENAME : &'static str = ".rpomo.json";
 
 fn main() {
     let matches = App::new("rpomo")
@@ -31,11 +24,18 @@ fn main() {
              .help("Status")
              .conflicts_with("start")
              .conflicts_with("stop")
+             .conflicts_with("break")
              .takes_value(false))
         .arg(Arg::with_name("stop")
              .long("stop")
              .help("Stop a running timer")
              .conflicts_with("start")
+             .takes_value(false))
+        .arg(Arg::with_name("break")
+             .long("break")
+             .help("Starts a break")
+             .conflicts_with("start")
+             .conflicts_with("stop")
              .takes_value(false))
         .get_matches();
 
@@ -57,6 +57,16 @@ fn main() {
                 } else {
                     println!("{}", p.status());
                 }
+            },
+            Result::Err(err) => println!("{:?}", err)
+        }
+    }
+
+    if matches.is_present("break") {
+        match pomodoro::Pomodoro::init_from_file() {
+            Result::Ok(mut p) => {
+                p.start_break();
+                let _ = p.write_to_file();
             },
             Result::Err(err) => println!("{:?}", err)
         }
