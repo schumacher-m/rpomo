@@ -50,12 +50,13 @@ fn main() {
             Result::Ok(mut p) => {
                 if p.is_exceeding_work_timer() && p.is_working() {
                     p.start_break();
+                    p.write_to_file().expect("Error while writing file!");
                 } else if p.is_exceeding_break_timer() && p.is_on_break() {
                     p.start_work();
+                    p.write_to_file().expect("Error while writing file!");
                 } else {
                     println!("{}", p.status());
                 }
-                p.write_to_file();
             },
             Result::Err(err) => println!("{:?}", err)
         }
