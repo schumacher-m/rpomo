@@ -81,7 +81,7 @@ impl Pomodoro {
         self.break_date_time = utc.to_rfc3339();
         self.break_count = self.break_count + 1;
 
-        if self.break_count == LONG_BREAK_COUNT {
+        if self.break_count % LONG_BREAK_COUNT == 0 {
             self.on_long_break = true;
             self.on_break = false;
         } else {
@@ -107,23 +107,30 @@ impl Pomodoro {
         self.break_date_time = "".to_owned();
     }
 
-    pub fn status(&mut self) -> String {
-        if !self.working && !self.on_break && !self.on_long_break {
-            "Idle".to_owned()
-        } else if self.working && !self.on_break && !self.on_long_break {
-            let utc = DateTime::parse_from_rfc3339(&self.start_date_time).unwrap();
-            let derp = Local::now().signed_duration_since(utc);
-            let minutes = derp.num_minutes();
-            let seconds = derp.num_seconds();
-            format!("Working: {:02}:{:02}", minutes, seconds-(minutes*60))
-        } else if !self.working && (self.on_break || self.on_long_break) {
-            let utc = DateTime::parse_from_rfc3339(&self.break_date_time).unwrap();
-            let derp = Local::now().signed_duration_since(utc);
-            let minutes = derp.num_minutes();
-            let seconds = derp.num_seconds();
-            format!("Break (#{}): {:02}:{:02}", self.break_count, minutes, seconds-(minutes*60))
-        } else {
-            "???".to_owned()
+    fn calculate_duration_difference(origin:&String) -> (i64, i64) {
+        let utc = DateTime::parse_from_rfc3339(origin).unwrap();
+        let derp = Local::now().signed_duration_since(utc);
+        (derp.num_minutes(), derp.num_seconds())
+    }
+
+    pub fn status(&self) -> String {
+        match self {
+            &Pomodoro { working: false, on_break: false, on_long_break: false, .. } => {
+                "Idle".to_owned()
+            },
+            &Pomodoro { working: true, on_break: false, on_long_break: false, .. } => {
+                let (minutes, seconds) = Self::calculate_duration_difference(&self.start_date_time);
+                format!("Working: {:02}:{:02}", minutes, seconds-(minutes*60))
+            },
+            &Pomodoro { working: false, on_break: true, on_long_break: false, .. } => {
+                let (minutes, seconds) = Self::calculate_duration_difference(&self.break_date_time);
+                format!("Break (#{}): {:02}:{:02}", self.break_count, minutes, seconds-(minutes*60))
+            },
+            &Pomodoro { working: false, on_break: false, on_long_break: true, .. } => {
+                let (minutes, seconds) = Self::calculate_duration_difference(&self.break_date_time);
+                format!("Long Break (#{}): {:02}:{:02}", self.break_count, minutes, seconds-(minutes*60))
+            },
+            _ => "???".to_owned()
         }
     }
 
@@ -257,6 +264,10 @@ mod tests {
         assert_eq!(p.break_count, 4);
         assert_eq!(p.on_long_break, true);
         assert_eq!(p.on_break, false);
+        p.start_break();
+        assert_eq!(p.break_count, 5);
+        assert_eq!(p.on_long_break, false);
+        assert_eq!(p.on_break, true);
     }
 
     #[test]
@@ -275,19 +286,20 @@ mod tests {
     fn it_returns_a_status_string() {
         let mut p = Pomodoro::new();
         assert_eq!(p.status(), "Idle");
-
         p.start_work();
         assert_eq!(p.status(), "Working: 00:00");
-
         p.start_break();
         assert_eq!(p.status(), "Break (#1): 00:00");
-
         p.start_work();
         assert_eq!(p.status(), "Working: 00:00");
-
         p.start_break();
         assert_eq!(p.status(), "Break (#2): 00:00");
-
+        p.start_break();
+        assert_eq!(p.status(), "Break (#3): 00:00");
+        p.start_break();
+        assert_eq!(p.status(), "Long Break (#4): 00:00");
+        p.start_break();
+        assert_eq!(p.status(), "Break (#5): 00:00");
     }
 
     #[test]
