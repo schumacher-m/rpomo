@@ -1,4 +1,3 @@
-use serde_json::{Error};
 use chrono::prelude::*;
 use std::fs::File;
 use std::io::prelude::*;
@@ -137,12 +136,24 @@ impl Pomodoro {
         }
     }
 
-    pub fn init_from_file() -> Result<Pomodoro, Error> {
+    pub fn init_from_file() -> Result<Pomodoro, &'static str> {
         let mut s = String::new();
-        let mut file = File::open(Self::default_file_path()).expect("File not found!");
-        file.read_to_string(&mut s).unwrap();
-        let p: Pomodoro = serde_json::from_str(&s).unwrap();
-        Ok(p)
+        let file = File::open(Self::default_file_path());
+
+        match file {
+            Result::Ok(mut file) => {
+                file.read_to_string(&mut s).unwrap();
+                let p: Pomodoro = serde_json::from_str(&s).unwrap();
+                Ok(p)
+            }
+            Result::Err(_) => {
+                let mut p = Pomodoro::new();
+                let _ = p.write_to_file();
+                Ok(p)
+            }
+        }
+
+
     }
 
     pub fn write_to_file(&mut self) -> Result<(), std::io::Error> {
