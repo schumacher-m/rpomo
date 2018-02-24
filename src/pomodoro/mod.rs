@@ -5,14 +5,14 @@ use std::env;
 use std;
 use serde_json;
 
-static CONFIG_FILENAME : &'static str = ".rpomo.json";
+static CONFIG_FILENAME: &'static str = ".rpomo.json";
 const WORK_DURATION: u8 = 25;
 const BREAK_DURATION: u8 = 5;
 const LONG_BREAK_DURATION: u8 = 15;
 const LONG_BREAK_COUNT: u8 = 4;
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct Pomodoro{
+pub struct Pomodoro {
     start_date_time: String,
     break_date_time: String,
     work_count: u8,
@@ -31,7 +31,7 @@ impl Pomodoro {
             break_count: 0,
             working: false,
             on_break: false,
-            on_long_break: false
+            on_long_break: false,
         }
     }
 
@@ -45,7 +45,7 @@ impl Pomodoro {
                     false
                 }
             }
-            _ => false
+            _ => false,
         }
     }
 
@@ -63,7 +63,7 @@ impl Pomodoro {
                     false
                 }
             }
-            _ => false
+            _ => false,
         }
     }
 
@@ -109,7 +109,7 @@ impl Pomodoro {
         self.break_date_time = "".to_owned();
     }
 
-    fn calculate_duration_difference(origin:&String) -> (i64, i64) {
+    fn calculate_duration_difference(origin: &String) -> (i64, i64) {
         let utc = DateTime::parse_from_rfc3339(origin).unwrap();
         let derp = Local::now().signed_duration_since(utc);
         (derp.num_minutes(), derp.num_seconds())
@@ -117,22 +117,49 @@ impl Pomodoro {
 
     pub fn status(&self) -> String {
         match self {
-            &Pomodoro { working: false, on_break: false, on_long_break: false, .. } => {
-                "Idle".to_owned()
-            },
-            &Pomodoro { working: true, on_break: false, on_long_break: false, .. } => {
+            &Pomodoro {
+                working: false,
+                on_break: false,
+                on_long_break: false,
+                ..
+            } => "Idle".to_owned(),
+            &Pomodoro {
+                working: true,
+                on_break: false,
+                on_long_break: false,
+                ..
+            } => {
                 let (minutes, _) = Self::calculate_duration_difference(&self.start_date_time);
-                format!("Work (#{}): {:01}m/{:01}m", self.work_count, minutes, WORK_DURATION)
-            },
-            &Pomodoro { working: false, on_break: true, on_long_break: false, .. } => {
+                format!(
+                    "Work (#{}): {:01}m/{:01}m",
+                    self.work_count, minutes, WORK_DURATION
+                )
+            }
+            &Pomodoro {
+                working: false,
+                on_break: true,
+                on_long_break: false,
+                ..
+            } => {
                 let (minutes, _) = Self::calculate_duration_difference(&self.break_date_time);
-                format!("Break (#{}): {:01}m/{:01}m", self.break_count, minutes, BREAK_DURATION)
-            },
-            &Pomodoro { working: false, on_break: false, on_long_break: true, .. } => {
+                format!(
+                    "Break (#{}): {:01}m/{:01}m",
+                    self.break_count, minutes, BREAK_DURATION
+                )
+            }
+            &Pomodoro {
+                working: false,
+                on_break: false,
+                on_long_break: true,
+                ..
+            } => {
                 let (minutes, _) = Self::calculate_duration_difference(&self.break_date_time);
-                format!("Long Break (#{}): {:01}m/{:01}m", self.break_count, minutes, LONG_BREAK_DURATION)
-            },
-            _ => "???".to_owned()
+                format!(
+                    "Long Break (#{}): {:01}m/{:01}m",
+                    self.break_count, minutes, LONG_BREAK_DURATION
+                )
+            }
+            _ => "???".to_owned(),
         }
     }
 
@@ -152,8 +179,6 @@ impl Pomodoro {
                 Ok(p)
             }
         }
-
-
     }
 
     pub fn write_to_file(&mut self) -> Result<(), std::io::Error> {
@@ -332,6 +357,9 @@ mod tests {
     fn it_returns_the_default_file_path() {
         // TODO Do we handle the case that a home_dir can't exists?
         let home_dir = env::home_dir().unwrap();
-        assert_eq!(Pomodoro::default_file_path(), format!("{}/{}", home_dir.display(), CONFIG_FILENAME));
+        assert_eq!(
+            Pomodoro::default_file_path(),
+            format!("{}/{}", home_dir.display(), CONFIG_FILENAME)
+        );
     }
 }

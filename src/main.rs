@@ -1,42 +1,50 @@
+extern crate chrono;
 #[macro_use]
 extern crate clap;
-extern crate serde_json;
 #[macro_use]
 extern crate serde_derive;
-extern crate chrono;
+extern crate serde_json;
 
 pub mod pomodoro;
 
-use clap::{Arg, App};
+use clap::{App, Arg};
 
 fn main() {
     let matches = App::new("rpomo")
         .version(crate_version!())
         .author(crate_authors!())
         .about("Rust Pomodoro CLI")
-        .arg(Arg::with_name("start")
-             .long("start")
-             .help("Starts a timer")
-             .conflicts_with("stop")
-             .takes_value(false))
-        .arg(Arg::with_name("status")
-             .long("status")
-             .help("Status")
-             .conflicts_with("start")
-             .conflicts_with("stop")
-             .conflicts_with("break")
-             .takes_value(false))
-        .arg(Arg::with_name("stop")
-             .long("stop")
-             .help("Stop a running timer")
-             .conflicts_with("start")
-             .takes_value(false))
-        .arg(Arg::with_name("break")
-             .long("break")
-             .help("Starts a break")
-             .conflicts_with("start")
-             .conflicts_with("stop")
-             .takes_value(false))
+        .arg(
+            Arg::with_name("start")
+                .long("start")
+                .help("Starts a timer")
+                .conflicts_with("stop")
+                .takes_value(false),
+        )
+        .arg(
+            Arg::with_name("status")
+                .long("status")
+                .help("Status")
+                .conflicts_with("start")
+                .conflicts_with("stop")
+                .conflicts_with("break")
+                .takes_value(false),
+        )
+        .arg(
+            Arg::with_name("stop")
+                .long("stop")
+                .help("Stop a running timer")
+                .conflicts_with("start")
+                .takes_value(false),
+        )
+        .arg(
+            Arg::with_name("break")
+                .long("break")
+                .help("Starts a break")
+                .conflicts_with("start")
+                .conflicts_with("stop")
+                .takes_value(false),
+        )
         .get_matches();
 
     if matches.is_present("start") {
@@ -57,8 +65,8 @@ fn main() {
                 } else {
                     println!("{}", p.status());
                 }
-            },
-            Result::Err(err) => println!("{:?}", err)
+            }
+            Result::Err(err) => println!("{:?}", err),
         }
     }
 
@@ -67,8 +75,8 @@ fn main() {
             Result::Ok(mut p) => {
                 p.start_break();
                 let _ = p.write_to_file();
-            },
-            Result::Err(err) => println!("{:?}", err)
+            }
+            Result::Err(err) => println!("{:?}", err),
         }
     }
 
@@ -77,8 +85,8 @@ fn main() {
             Result::Ok(mut p) => {
                 p.stop();
                 let _ = p.write_to_file();
-            },
-            Result::Err(err) => println!("{:?}", err)
+            }
+            Result::Err(err) => println!("{:?}", err),
         }
     }
 }
